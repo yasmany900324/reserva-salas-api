@@ -11,6 +11,7 @@ import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -37,6 +38,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConflictoException.class)
     public ProblemDetail manejarConflicto(ConflictoException ex) {
         return problema(HttpStatus.CONFLICT, "Conflicto", ex.getMessage());
+    }
+
+    /** Login fallido. El mensaje no revela si falló el usuario o la contraseña. */
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail manejarAutenticacion(AuthenticationException ex) {
+        return problema(HttpStatus.UNAUTHORIZED, "No autenticado", "Usuario o contraseña incorrectos");
     }
 
     /** Red de seguridad: una restricción de la base de datos rechazó la operación. */

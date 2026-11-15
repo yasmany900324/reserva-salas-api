@@ -22,3 +22,13 @@ spring:
         max-page-size: 100
         # Páginas como {content, page: {size, number, totalElements, totalPages}}
         serialization-mode: via-dto
+
+app:
+  seguridad:
+    # Valores por defecto SOLO para desarrollo local, para que la app arranque sin configurar nada.
+    # Fuera de local hay que definir AUTH_USER, AUTH_PASSWORD y JWT_SECRET (mínimo 32 caracteres).
+    usuario: ${AUTH_USER:admin}
+    password: ${AUTH_PASSWORD:admin123}
+    jwt:
+      secreto: ${JWT_SECRET:clave-de-desarrollo-local-no-usar-en-produccion}
+      expiracion: ${JWT_EXPIRATION:1h}
