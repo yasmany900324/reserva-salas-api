@@ -1,7 +1,11 @@
 package com.yasmany.reservas.comun.error;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +37,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(RecursoNoEncontradoException.class)
     public ProblemDetail manejarNoEncontrado(RecursoNoEncontradoException ex) {
         return problema(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+    }
+
+    /** Reglas que dependen de varios campos o del reloj; mismo formato que Bean Validation. */
+    @ExceptionHandler(DatosInvalidosException.class)
+    public ProblemDetail manejarDatosInvalidos(DatosInvalidosException ex) {
+        return datosInvalidos(List.of(new ErrorCampo(ex.getCampo(), ex.getMessage())));
     }
 
     @ExceptionHandler(ConflictoException.class)
@@ -75,18 +85,32 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(e -> new ErrorCampo(e.getField(), e.getDefaultMessage()))
                 .sorted(Comparator.comparing(ErrorCampo::campo).thenComparing(ErrorCampo::mensaje))
                 .toList();
-        ProblemDetail problema = problema(HttpStatus.BAD_REQUEST, "Datos inválidos",
-                "La petición tiene campos inválidos");
-        problema.setProperty("errors", errores);
-        return ResponseEntity.badRequest().body(problema);
+        return ResponseEntity.badRequest().body(datosInvalidos(errores));
     }
 
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(
             @NonNull HttpMessageNotReadableException ex, @NonNull HttpHeaders headers,
             @NonNull HttpStatusCode status, @NonNull WebRequest request) {
+        // Si Jackson sabe qué campo falló (p. ej. una fecha sin zona), se dice cuál y qué se esperaba
+        if (ex.getCause() instanceof MismatchedInputException mie && !mie.getPath().isEmpty()) {
+            String campo = mie.getPath().stream()
+                    .map(JsonMappingException.Reference::getFieldName)
+                    .collect(Collectors.joining("."));
+            String mensaje = OffsetDateTime.class.equals(mie.getTargetType())
+                    ? "formato de fecha inválido; se espera ISO-8601 con zona horaria, p. ej. 2026-12-01T10:00:00Z"
+                    : "tiene un formato o tipo incorrecto";
+            return ResponseEntity.badRequest().body(datosInvalidos(List.of(new ErrorCampo(campo, mensaje))));
+        }
         return ResponseEntity.badRequest().body(problema(HttpStatus.BAD_REQUEST, "Cuerpo inválido",
-                "El cuerpo de la petición no es un JSON válido o algún campo tiene un formato incorrecto"));
+                "El cuerpo de la petición no es un JSON válido"));
+    }
+
+    private static ProblemDetail datosInvalidos(List<ErrorCampo> errores) {
+        ProblemDetail problema = problema(HttpStatus.BAD_REQUEST, "Datos inválidos",
+                "La petición tiene campos inválidos");
+        problema.setProperty("errors", errores);
+        return problema;
     }
 
     private static ProblemDetail problema(HttpStatus status, String titulo, String detalle) {

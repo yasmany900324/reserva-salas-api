@@ -8,7 +8,14 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5434/reservas}
     username: ${DB_USER:reservas}
     password: ${DB_PASSWORD:reservas}
+  jackson:
+    time-zone: UTC
   jpa:
+    properties:
+      hibernate:
+        # Las fechas se leen y escriben en UTC, sin depender de la zona del servidor
+        jdbc:
+          time_zone: UTC
     # El esquema lo gestiona Flyway; Hibernate solo valida que las entidades encajen
     hibernate:
       ddl-auto: validate
@@ -32,3 +39,6 @@ app:
     jwt:
       secreto: ${JWT_SECRET:clave-de-desarrollo-local-no-usar-en-produccion}
       expiracion: ${JWT_EXPIRATION:1h}
+  reservas:
+    # Zona en la que se interpreta el filtro ?fecha=AAAA-MM-DD de GET /reservas
+    zona-filtro-fecha: ${APP_ZONA_FILTRO_FECHA:UTC}

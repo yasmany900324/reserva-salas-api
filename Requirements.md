@@ -106,6 +106,8 @@ Cuerpo de `POST /reservas`:
 |-----------|----------------|------------------------------------------------------------|
 | `salaId`  | `1`            | Solo las reservas de esa sala.                             |
 | `fecha`   | `2026-11-20`   | Solo las reservas que ocupan algún momento de ese día, en la zona horaria configurada (D-3). |
+| `desde` / `hasta` | `2026-11-20` / `2026-11-27` | Rango de días, ambos incluidos; se puede usar solo uno de los dos. No se combina con `fecha`; si `desde` es posterior a `hasta` → `400`. |
+| `estado`  | `ACTIVA`       | Solo las reservas en ese estado. Sin él se listan activas y canceladas. |
 | `responsableId` | `2`      | Solo las de ese responsable (extra, por el modelo Responsable). |
 | `page`    | `0`            | Página, empezando en 0. Por defecto 0.                     |
 | `size`    | `20`           | Tamaño de página. Por defecto 20, máximo 100.              |
@@ -171,7 +173,7 @@ Debe incluir:
 |-----|----------|----------|
 | D-1 | Alcance de Responsable | Primero solo crear y listar. El CRUD completo, al final, si sobra tiempo. |
 | D-2 | Usuarios para el login | Un usuario fijo, configurado por variables de entorno. |
-| D-3 | Formato de fechas | ISO-8601 con zona horaria (`OffsetDateTime`), guardado como `timestamptz`. El filtro `fecha` se interpreta en una zona configurable. |
+| D-3 | Formato de fechas | ISO-8601 con zona horaria (`OffsetDateTime`), guardado como `timestamptz`. Los filtros por día se interpretan en UTC (configurable con `APP_ZONA_FILTRO_FECHA`). |
 | D-4 | Sala o responsable inexistentes al crear una reserva | `404`, con un mensaje que dice cuál no existe. |
 | D-5 | Cancelar dos veces, o cancelar una reserva ya terminada | `409` en los dos casos. |
 | D-6 | Validaciones extra | No se permiten reservas en el pasado. Sin límite de duración. |
