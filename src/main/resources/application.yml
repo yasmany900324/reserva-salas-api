@@ -1,0 +1,17 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  application:
+    name: reserva-salas-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/reservas}
+    username: ${DB_USER:reservas}
+    password: ${DB_PASSWORD:reservas}
+  jpa:
+    # El esquema lo gestiona Flyway; Hibernate solo valida que las entidades encajen
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
