@@ -5,9 +5,15 @@ import com.yasmany.reservas.sala.dto.SalaResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.SortDefault;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+@Tag(name = "Salas", description = "Crear y consultar salas de reuniones")
 @RestController
 @RequestMapping("/salas")
 @RequiredArgsConstructor
@@ -25,6 +32,10 @@ public class SalaController {
     private final SalaService salaService;
 
     @PostMapping
+    @ApiResponse(responseCode = "201", description = "Sala creada; la cabecera Location apunta a ella")
+    @ApiResponse(responseCode = "409", description = "Ya existe una sala con ese código",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = ProblemDetail.class)))
     public ResponseEntity<SalaResponse> crear(@Valid @RequestBody CrearSalaRequest request) {
         SalaResponse sala = salaService.crear(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -35,7 +46,7 @@ public class SalaController {
     }
 
     @GetMapping
-    public Page<SalaResponse> listar(@SortDefault("codigo") Pageable pageable) {
+    public Page<SalaResponse> listar(@ParameterObject @SortDefault("codigo") Pageable pageable) {
         return salaService.listar(pageable);
     }
 
